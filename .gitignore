@@ -1,0 +1,5 @@
+.pio
+.cache
+.ccls
+blob
+compile_commands.json

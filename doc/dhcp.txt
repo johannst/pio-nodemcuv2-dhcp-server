@@ -1,0 +1,134 @@
+dhcp protocol: https://datatracker.ietf.org/doc/html/rfc2131
+dhcp options : https://datatracker.ietf.org/doc/html/rfc2132
+
+dhcp message:
+
+   0                   1                   2                   3
+   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     op (1)    |   htype (1)   |   hlen (1)    |   hops (1)    |
+   +---------------+---------------+---------------+---------------+
+   |                            xid (4)                            |
+   +-------------------------------+-------------------------------+
+   |           secs (2)            |           flags (2)           |
+   +-------------------------------+-------------------------------+
+   |                          ciaddr  (4)                          |
+   +---------------------------------------------------------------+
+   |                          yiaddr  (4)                          |
+   +---------------------------------------------------------------+
+   |                          siaddr  (4)                          |
+   +---------------------------------------------------------------+
+   |                          giaddr  (4)                          |
+   +---------------------------------------------------------------+
+   |                                                               |
+   |                          chaddr  (16)                         |
+   |                                                               |
+   |                                                               |
+   +---------------------------------------------------------------+
+   |                                                               |
+   |                          sname   (64)                         |
+   +---------------------------------------------------------------+
+   |                                                               |
+   |                          file    (128)                        |
+   +---------------------------------------------------------------+
+   |                                                               |
+   |                          options (variable)                   |
+   +---------------------------------------------------------------+
+
+dhcp message flags field:
+
+                       1 1 1 1 1 1
+   0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |B|             MBZ             |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+   B:  BROADCAST flag
+   MBZ:  MUST BE ZERO (reserved for future use)
+
+dhcp message field description:
+
+   FIELD      OCTETS       DESCRIPTION
+   -----      ------       -----------
+   op            1         Message op code / message type.
+                           1 = BOOTREQUEST, 2 = BOOTREPLY
+   htype         1         Hardware address type, see ARP section in "Assigned
+                           Numbers" RFC; e.g., '1' = 10mb ethernet.
+   hlen          1         Hardware address length (e.g.  '6' for 10mb
+                           ethernet).
+   hops          1         Client sets to zero, optionally used by relay agents
+                           when booting via a relay agent.
+   xid           4         Transaction ID, a random number chosen by the
+                           client, used by the client and server to associate
+                           messages and responses between a client and a
+                           server.
+   secs          2         Filled in by client, seconds elapsed since client
+                           began address acquisition or renewal process.
+   flags         2         Flags ([0]: broadcast flag).
+   ciaddr        4         Client IP address; only filled in if client is in
+                           BOUND, RENEW or REBINDING state and can respond
+                           to ARP requests.
+   yiaddr        4         'your' (client) IP address.
+   siaddr        4         IP address of next server to use in bootstrap;
+                           returned in DHCPOFFER, DHCPACK by server.
+   giaddr        4         Relay agent IP address, used in booting via a
+                           relay agent.
+   chaddr       16         Client hardware address.
+   sname        64         Optional server host name, null terminated string.
+   file        128         Boot file name, null terminated string; "generic"
+                           name or null in DHCPDISCOVER, fully qualified
+                           directory-path name in DHCPOFFER.
+   options     var         Optional parameters field.  See the options
+                           documents for a list of defined options.
+
+- A DHCP server always returns its own address in the 'server identifier'
+  option.
+
+- Client must accept DHCP of at least 576 octets (312 octects of option)
+
+- Time values (eg lease) are relative times in seconds and should be treated
+  relative wo each nodes clock.
+
+- Services:
+    - Parameter repository (2.1), used for persistent storage of network
+      parameters.
+    - Dynamic nw address allocation (2.2)
+
+- Protocol
+    - op == BOOTREQUEST client -> server message
+    - op == BOOTREPLY   server -> client message
+    - options[0:4] -> magic cookie {0x63, 0x82, 0x53, 0x63}
+    - option (53 - DHCP Message Type) required in all dhcp messages
+
+    1. Client broadcasts DHCPDISCOVER (53).
+    2. Server respond with DHCPOFFER (53).
+        - yiaddr -> allocated address
+        - additional options
+    3. Client broadcasts DHCPREQUEST (53).
+        - must include 'server identifier' option
+        - 'requested ip address' option must be set to 'yiaddr' offerened in 2.
+    4. Server sends DHCPACK (53) to client.
+        - fill 'yiaddr' with allocated address
+        - add configuration parameters
+    5. Client may send DHCPDECLINE (53) if it detects addr already in use.
+    6. Client may send DHCPRELEASE (53).
+
+- Constructing dhcp message
+    - variable options must end with 'end (255)' option
+    - client -> server udp port 67
+    - server -> client udp port 68
+    - @server (msg received by client)
+        - giaddr !=0 -> using BOOTP relay -> send resp to @giaddr:67
+        - giaddr == 0 && ciaddr != 0 -> send resp to @ciaddr:68
+        - giaddr == 0 && ciaddr == 0 && flags.b == 1 -> send resp to broadcast 0xffff_ffff
+        - giaddr == 0 && ciaddr == 0 && flags.b == 0 -> send resp to client hw addr + yiaddr
+
+- Options:
+    - 'maximum DHCP message size'
+        - Client may negotiate lager dhcp messages.
+    - 'server identifier'
+        - A DHCP server always returns its own address in the option.
+    - 'client identifier'
+        - Client may pass explicit client identifier to server.
+    - 'DHCP message type' (REQUIRED)
+        - type of dhcp message
