@@ -1,4 +1,6 @@
-// Copyright (c) 2022 Johannes Stoelp
+// SPDX-License-Identifier: MIT
+//
+// Copyright (c) 2022, Johannes Stoelp <dev@memzero.de>
 //
 // dhcp protocol: https://datatracker.ietf.org/doc/html/rfc2131
 // dhcp options : https://datatracker.ietf.org/doc/html/rfc2132

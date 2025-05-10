@@ -1,4 +1,6 @@
-// Copyright (c) 2022 Johannes Stoelp
+// SPDX-License-Identifier: MIT
+//
+// Copyright (c) 2022, Johannes Stoelp <dev@memzero.de>
 
 #ifndef LEASE_DB_H
 #define LEASE_DB_H

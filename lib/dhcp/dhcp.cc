@@ -1,4 +1,6 @@
-// Copyright (c) 2022 Johannes Stoelp
+// SPDX-License-Identifier: MIT
+//
+// Copyright (c) 2022, Johannes Stoelp <dev@memzero.de>
 
 #include "dhcp.h"
 #include "utils.h"
